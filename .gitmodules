@@ -1,0 +1,6 @@
+[submodule "dependencies/data_desk"]
+	path = dependencies/data_desk
+	url = https://github.com/ryanfleury/data_desk
+[submodule "dependencies/glfw"]
+	path = dependencies/glfw
+	url = https://github.com/glfw/glfw
