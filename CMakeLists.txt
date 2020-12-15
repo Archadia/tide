@@ -10,6 +10,9 @@ set(GLAD_SOURCE ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glad/src/glad.c)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/freetype2/include/)
 link_libraries(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/freetype2/libfreetype.a)
 
+# Add stb
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dependencies/stb/)
+
 # Add glfw submodule
 set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )

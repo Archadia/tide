@@ -14,15 +14,15 @@ void tide::ProcessInit()
 
 void tide::ProcessUpdate(double t, double dt)
 {
-
+    
 }
 
 void tide::ProcessDraw()
 {
-
+    
 }
 
 void tide::ProcessClose()
 {
-    tide::FreeFace();
+    tide::UnloadFreeType();
 }

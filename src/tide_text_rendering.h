@@ -13,15 +13,15 @@ namespace tide
         float bearingX, bearingY;
         uint32_t advance;
     };
-
+    
     struct FONT_FACE
     {
         const char* name;
         std::map<uint8_t, FONT_CHARACTER*>* characters;
     };
-
+    
     bool LoadFreeType();
-    void FreeFace();
+    void UnloadFreeType();
     FONT_FACE* LoadFace(const char* font, int fontSize, int index);
     void RenderText(const char* text, float x, float y, float scale);
 }
