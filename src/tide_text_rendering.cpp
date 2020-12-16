@@ -28,7 +28,7 @@ bool tide::LoadFreeType()
     // Create and load the quad VAO used to draw text.
     float vertices[] = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
     quadVAO = (VAO*) malloc(sizeof(VAO));
-    tide::CreateVAO(quadVAO);
+    tide::CreateVAO(*quadVAO);
     tide::UploadToVAO(*quadVAO, 0, 2, vertices, 12);
     
     TIDE_LOG("FreeType successfully loaded");

@@ -1,14 +1,15 @@
 #include "tide_gl.h"
+#include "tide_log.h"
 #include <glad/glad.h>
 
 #include <stb_ds.h>
 
-void tide::CreateVAO(VAO* vao)
+void tide::CreateVAO(VAO& vao)
 {
     uint32_t id;
     glGenVertexArrays(1, &id);
-    vao->buffers = NULL;
-    vao->id = id;
+    vao.buffers = NULL;
+    vao.id = id;
 }
 
 void tide::UploadToVAO(VAO& vao, uint32_t index, uint32_t size, float* data, uint32_t length)
@@ -45,4 +46,75 @@ void tide::FreeVAO(VAO& vao)
         }
     }
     glDeleteVertexArrays(1, &vao.id);
+}
+
+void tide::CreateProgram(SHADER_PROGRAM& program)
+{
+    program.id = glCreateProgram();
+}
+
+uint32_t tide::AddShaderToProgram(SHADER_PROGRAM& program, const char* source, uint32_t glType)
+{
+    uint32_t shader = glCreateShader(glType);
+    
+    glShaderSource(shader, 1, (const char**) &source, NULL);
+    glCompileShader(shader);
+    
+    int32_t compiled = 0;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
+    if(!compiled)
+    {
+        TIDE_ERROR("Shader compilation failed [TYPE=%u]", glType);
+        glDeleteShader(shader);
+        return 0;
+    }
+    glAttachShader(program.id, shader);
+    return shader;
+}
+
+void tide::LinkAndValidateProgram(SHADER_PROGRAM& program)
+{
+    glLinkProgram(program.id);
+    glValidateProgram(program.id);
+    
+    int32_t linked = 0;
+    glGetProgramiv(program.id, GL_LINK_STATUS, &linked);
+    if(!linked)
+    {
+        TIDE_ERROR("Program linking failed");
+        //FreeShadersAndProgram(program);
+        return;
+    }
+}
+
+void tide::FreeProgram(SHADER_PROGRAM& program)
+{
+    glDeleteProgram(program.id);
+}
+
+void tide::FreeShader(uint32_t shader)
+{
+    glDeleteShader(shader);
+}
+
+uint32_t tide::GetUniformLocation(SHADER_PROGRAM& program, const char* name)
+{
+    return glGetUniformLocation(program.id, name);
+}
+
+template<> void tide::LoadToProgram(uint32_t location, int value)
+{
+    glUniform1i(location, value);
+}
+
+template<> void tide::LoadToProgram(uint32_t location, float value)
+{
+    glUniform1f(location, value);
+}
+
+// TODO(kroma): do loading for vec2, vec3, vec4, mat4
+
+void tide::BindProgram(uint32_t id)
+{
+    glUseProgram(id);
 }
