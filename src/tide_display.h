@@ -12,6 +12,9 @@ namespace tide
     };
     
     DISPLAY* GetDisplay();
+    
+    unsigned int GetDisplayWidth();
+    unsigned int GetDisplayHeight();
 }
 
 #endif // TIDE_DISPLAY_H

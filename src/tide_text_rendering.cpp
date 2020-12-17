@@ -2,6 +2,7 @@
 #include "tide_math.h"
 #include "tide_log.h"
 #include "tide_gl.h"
+#include "tide_display.h"
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
@@ -110,7 +111,6 @@ void tide::UnloadFreeType()
     TIDE_LOG("FreeType successfully destroyed");
 }
 
-
 tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
 {
     FT_Open_Args args;
@@ -143,8 +143,9 @@ tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
     fontFace->characters = new std::map<uint8_t, tide::FONT_CHARACTER*>();
     
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    const char* alphabet = "abcdefghijklmnopqrstuvwxyz ";
-    for(int i = 0; i < 27; i++)
+    const char* alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890 ";
+    int alphabetLength = strlen(alphabet);
+    for(int i = 0; i < alphabetLength; i++)
     {
         char c = alphabet[i];
         auto glyphIndex = FT_Get_Char_Index(face, c);
@@ -159,8 +160,8 @@ tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
         
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         
@@ -196,12 +197,12 @@ void tide::RenderText(const char* text, float x, float y, float scale)
             tide::FONT_CHARACTER* fchar = fontFaces[0]->characters->at(c);
             
             MAT4F tfm = IdentityM4F();
-            TranslateM4F(tfm, x + xcaret,  y + 16 - fchar->bearingY, 0);
-            ScaleM4F(tfm, fchar->width, fchar->height, 1);
+            TranslateM4F(tfm, x + xcaret * scale, y + (16 - fchar->bearingY) * scale, 0);
+            ScaleM4F(tfm, fchar->width * scale, fchar->height * scale, 1);
             tide::LoadToProgram(locTransformation, tfm);
             
             // Loading Ortho
-            MAT4F otm = tide::OrthoM4F(0, 800, 600, 0, 0, 100);
+            MAT4F otm = tide::OrthoM4F(0, tide::GetDisplayWidth(), tide::GetDisplayHeight(), 0, 0, 100);
             tide::LoadToProgram(locOrthographic, otm);
             
             tide::BindTexture(fchar->id);

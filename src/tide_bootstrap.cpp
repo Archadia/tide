@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glad/glad.h>
+
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <time.h>
 
@@ -47,7 +49,7 @@ int main()
     display = CreateDisplay();
     if(display)
     {
-        glfwSwapInterval(0);
+        //glfwSwapInterval(0);
         
         TIDE_LOG("Tide successfully loaded");
         tide::ProcessInit();
@@ -101,7 +103,7 @@ int main()
     return 0;
 }
 
-tide::DISPLAY* GetDisplay()
+tide::DISPLAY* tide::GetDisplay()
 {
     return display;
 }
