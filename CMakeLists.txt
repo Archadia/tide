@@ -25,9 +25,6 @@ set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
 set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
 add_subdirectory(dependencies/glfw)
 
-# Add data_desk submodule
-add_subdirectory(dependencies/data_desk)
-
 # Set SOURCE to all .h, .cpp and .c files.
 file(GLOB SOURCE
     "src/*.h"
@@ -36,5 +33,3 @@ file(GLOB SOURCE
 
 add_executable(${PROJECT_NAME} ${SOURCE} ${GLAD_SOURCE})
 target_link_libraries(${PROJECT_NAME} glfw)
-
-

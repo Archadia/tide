@@ -17,16 +17,8 @@ void tide::ProcessInit()
     
     const char* text = "#version 330\nuniform float test;\nvoid main() {\n}";
     
-    tide::CreateProgram(*program);
-    uint32_t vertexShader = tide::AddShaderToProgram(*program, text, TIDE_VERTEX_SHADER);
-    tide::LinkAndValidateProgram(*program);
-    tide::FreeShader(vertexShader);
-    
     uint32_t location = tide::GetUniformLocation(*program, "test");
     tide::LoadToProgram<float>(location, 1);
-    
-    tide::FreeProgram(*program);
-    free((void*) program);
 }
 
 void tide::ProcessUpdate(double t, double dt)
@@ -35,7 +27,7 @@ void tide::ProcessUpdate(double t, double dt)
 
 void tide::ProcessDraw()
 {
-    tide::RenderText("void main();", 0, 0, 1);
+    tide::RenderText("hey lilgrey\nwhat!", 0, 0, 1);
 }
 
 void tide::ProcessClose()

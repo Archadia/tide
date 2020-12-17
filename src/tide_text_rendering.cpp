@@ -35,7 +35,8 @@ char* ReadTextFile(const char* path)
     }
     else
     {
-        TIDE_ERROR("File couldn't be read...");
+        TIDE_ERROR("File couldn't be read %s", path);
+        return buf;
     }
     fclose(file);
     return buf;
@@ -72,17 +73,23 @@ bool tide::LoadFreeType()
     program = (tide::SHADER_PROGRAM*) malloc(sizeof(tide::SHADER_PROGRAM));
     tide::CreateProgram(*program);
     
-    uint32_t vshader = tide::AddShaderToProgram(*program, vertexSource, TIDE_VERTEX_SHADER);
-    uint32_t fshader = tide::AddShaderToProgram(*program, fragmentSource, TIDE_FRAGMENT_SHADER);
+    if(vertexSource != NULL)
+    {
+        uint32_t vshader = tide::AddShaderToProgram(*program, vertexSource, TIDE_VERTEX_SHADER);
+        FreeShader(vshader);
+        FreeFileText(vertexSource);
+    }
+    if(fragmentSource != NULL)
+    {
+        uint32_t fshader = tide::AddShaderToProgram(*program, fragmentSource, TIDE_FRAGMENT_SHADER);
+        FreeShader(fshader);
+        FreeFileText(fragmentSource);
+    }
     tide::LinkAndValidateProgram(*program);
     
     locTransformation = tide::GetUniformLocation(*program, "transformation");
     locOrthographic = tide::GetUniformLocation(*program, "orthographic");
     
-    FreeShader(vshader);
-    FreeShader(fshader);
-    FreeFileText(vertexSource);
-    FreeFileText(fragmentSource);
     TIDE_LOG("FreeType successfully loaded");
     return true;
 }
@@ -136,8 +143,8 @@ tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
     fontFace->characters = new std::map<uint8_t, tide::FONT_CHARACTER*>();
     
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    const char* alphabet = "abcdefghijklmnopqrstuvwxyz";
-    for(int i = 0; i < 26; i++)
+    const char* alphabet = "abcdefghijklmnopqrstuvwxyz ";
+    for(int i = 0; i < 27; i++)
     {
         char c = alphabet[i];
         auto glyphIndex = FT_Get_Char_Index(face, c);
@@ -202,11 +209,6 @@ void tide::RenderText(const char* text, float x, float y, float scale)
             
             xcaret += (fchar->advance / 64.0);
         }
-        else
-        {
-            TIDE_ERROR("Character %c hasn't been loaded", text[i]);
-        }
-        //float cx = x + 
     }
     tide::BindVAO(0);
     tide::BindProgram(0);
