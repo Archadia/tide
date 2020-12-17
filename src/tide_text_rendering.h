@@ -11,7 +11,7 @@ namespace tide
         uint32_t id;
         float width, height;
         float bearingX, bearingY;
-        uint32_t advance;
+        float advance;
     };
     
     struct FONT_FACE
@@ -24,6 +24,7 @@ namespace tide
     void UnloadFreeType();
     FONT_FACE* LoadFace(const char* font, int fontSize, int index);
     void RenderText(const char* text, float x, float y, float scale);
+    void FreeTextRenderer();
 }
 
 #endif

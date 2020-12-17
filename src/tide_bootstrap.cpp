@@ -47,33 +47,52 @@ int main()
     display = CreateDisplay();
     if(display)
     {
+        glfwSwapInterval(0);
+        
         TIDE_LOG("Tide successfully loaded");
         tide::ProcessInit();
         
         const double dt = 0.01;
-        double accumulator = 0.0;
+        double acc1 = 0.0;
+        double acc2 = 0.0;
         
         double time = 0.0;
         
         clock_t startTime = clock();
         
+        double frameTime;
+        
+        int frameCount;
         
         while(!glfwWindowShouldClose(display->window))
         {
             clock_t endTime = clock();
-            auto frameTime = endTime - startTime;
+            frameTime = 1.0*(endTime - startTime)/CLOCKS_PER_SEC;
             startTime = endTime;
-            accumulator += frameTime;
             
-            if(accumulator >= dt)
+            acc1 += frameTime;
+            acc2 += frameTime;
+            
+            if(acc1 >= dt)
             {
-                accumulator -= dt;
+                acc1 -= dt;
                 time += dt;
                 tide::ProcessUpdate(time, dt);
             }
+            
+            if(acc2 >= 1.0)
+            {
+                display->fps = frameCount;
+                frameCount = 0;
+                acc2 -= 1;
+            }
+            
+            frameCount++;
             tide::ProcessDraw();
             glfwSwapBuffers(display->window);
             glfwPollEvents();
+            
+            
         }
         tide::ProcessClose();
         free(display);

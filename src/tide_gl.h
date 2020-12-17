@@ -22,6 +22,8 @@ namespace tide
     void CreateVAO(VAO& vao);
     void UploadToVAO(VAO& vao, uint32_t index, uint32_t size, float* data, uint32_t length);
     void FreeVAO(VAO& vao);
+    void BindVAO(uint32_t id);
+    void DrawVAO();
     
     // 
     
@@ -38,5 +40,9 @@ namespace tide
     uint32_t GetUniformLocation(SHADER_PROGRAM& program, const char* name);
     template<typename T> void LoadToProgram(uint32_t location, T value);
     void BindProgram(uint32_t id);
+    
+    // Texture
+    
+    void BindTexture(uint32_t id);
 }
 #endif //TIDE_GL_H

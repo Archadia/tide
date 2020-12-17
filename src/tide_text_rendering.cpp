@@ -1,4 +1,5 @@
 #include "tide_text_rendering.h"
+#include "tide_math.h"
 #include "tide_log.h"
 #include "tide_gl.h"
 
@@ -14,6 +15,36 @@ static FT_Library library;
 static tide::FONT_FACE** fontFaces;
 
 static tide::VAO* quadVAO;
+static tide::SHADER_PROGRAM* program;
+
+static uint32_t locTransformation;
+static uint32_t locOrthographic;
+
+char* ReadTextFile(const char* path)
+{
+    char* buf = NULL;
+    FILE* file = fopen(path, "r");
+    if(file)
+    {
+        char c;
+        while((c = fgetc(file)) != EOF)
+        {
+            arrput(buf, c);
+        }
+        arrput(buf, '\0');
+    }
+    else
+    {
+        TIDE_ERROR("File couldn't be read...");
+    }
+    fclose(file);
+    return buf;
+}
+
+void FreeFileText(const char* text)
+{
+    arrfree(text);
+}
 
 bool tide::LoadFreeType()
 {
@@ -26,11 +57,32 @@ bool tide::LoadFreeType()
     }
     
     // Create and load the quad VAO used to draw text.
-    float vertices[] = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
     quadVAO = (VAO*) malloc(sizeof(VAO));
     tide::CreateVAO(*quadVAO);
+    
+    float vertices[] = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
     tide::UploadToVAO(*quadVAO, 0, 2, vertices, 12);
     
+    float texturecoords[] = {0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1};
+    tide::UploadToVAO(*quadVAO, 1, 2, texturecoords, 12);
+    
+    char* vertexSource = ReadTextFile("fontv.glsl");
+    char* fragmentSource = ReadTextFile("fontf.glsl");
+    
+    program = (tide::SHADER_PROGRAM*) malloc(sizeof(tide::SHADER_PROGRAM));
+    tide::CreateProgram(*program);
+    
+    uint32_t vshader = tide::AddShaderToProgram(*program, vertexSource, TIDE_VERTEX_SHADER);
+    uint32_t fshader = tide::AddShaderToProgram(*program, fragmentSource, TIDE_FRAGMENT_SHADER);
+    tide::LinkAndValidateProgram(*program);
+    
+    locTransformation = tide::GetUniformLocation(*program, "transformation");
+    locOrthographic = tide::GetUniformLocation(*program, "orthographic");
+    
+    FreeShader(vshader);
+    FreeShader(fshader);
+    FreeFileText(vertexSource);
+    FreeFileText(fragmentSource);
     TIDE_LOG("FreeType successfully loaded");
     return true;
 }
@@ -84,9 +136,12 @@ tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
     fontFace->characters = new std::map<uint8_t, tide::FONT_CHARACTER*>();
     
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    for(uint8_t c = 0; c < 1; c++)
+    const char* alphabet = "abcdefghijklmnopqrstuvwxyz";
+    for(int i = 0; i < 26; i++)
     {
-        error = FT_Load_Char(face, c, FT_LOAD_RENDER);
+        char c = alphabet[i];
+        auto glyphIndex = FT_Get_Char_Index(face, c);
+        error = FT_Load_Glyph(face, glyphIndex, FT_LOAD_RENDER);
         if (error != 0)
         {
             TIDE_ERROR("%s FreeType Error: %u. Unable to load FreeType glyph\n", error);
@@ -97,8 +152,10 @@ tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, face->glyph->bitmap.width, face->glyph->bitmap.rows, 0, GL_RED, GL_UNSIGNED_BYTE, face->glyph->bitmap.buffer);
         
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         
         tide::FONT_CHARACTER* character = (tide::FONT_CHARACTER*) malloc(sizeof(tide::FONT_CHARACTER));
         character->id = texture;
@@ -116,5 +173,47 @@ tide::FONT_FACE* tide::LoadFace(const char* font, int fontSize, int index)
 
 void tide::RenderText(const char* text, float x, float y, float scale)
 {
+    tide::BindProgram(program->id);
+    tide::BindVAO(quadVAO->id);
     
+    float xcaret = 0;
+    
+    int len = strlen(text);
+    for(int i = 0; i < len; i++)
+    {
+        char c = text[i];
+        
+        auto pos = fontFaces[0]->characters->find(c);
+        if(pos != fontFaces[0]->characters->end())
+        {
+            tide::FONT_CHARACTER* fchar = fontFaces[0]->characters->at(c);
+            
+            MAT4F tfm = IdentityM4F();
+            TranslateM4F(tfm, x + xcaret,  y + 16 - fchar->bearingY, 0);
+            ScaleM4F(tfm, fchar->width, fchar->height, 1);
+            tide::LoadToProgram(locTransformation, tfm);
+            
+            // Loading Ortho
+            MAT4F otm = tide::OrthoM4F(0, 800, 600, 0, 0, 100);
+            tide::LoadToProgram(locOrthographic, otm);
+            
+            tide::BindTexture(fchar->id);
+            tide::DrawVAO();
+            
+            xcaret += (fchar->advance / 64.0);
+        }
+        else
+        {
+            TIDE_ERROR("Character %c hasn't been loaded", text[i]);
+        }
+        //float cx = x + 
+    }
+    tide::BindVAO(0);
+    tide::BindProgram(0);
+}
+
+void tide::FreeTextRenderer()
+{
+    FreeProgram(*program);
+    free((void*)program);
 }

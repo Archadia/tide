@@ -1,3 +1,4 @@
+#include "tide_math.h"
 #include "tide_gl.h"
 #include "tide_log.h"
 #include <glad/glad.h>
@@ -46,6 +47,16 @@ void tide::FreeVAO(VAO& vao)
         }
     }
     glDeleteVertexArrays(1, &vao.id);
+}
+
+void tide::BindVAO(uint32_t id)
+{
+    glBindVertexArray(id);
+}
+
+void tide::DrawVAO()
+{
+    glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
 void tide::CreateProgram(SHADER_PROGRAM& program)
@@ -112,9 +123,21 @@ template<> void tide::LoadToProgram(uint32_t location, float value)
     glUniform1f(location, value);
 }
 
+template<> void tide::LoadToProgram(uint32_t location, tide::MAT4F value)
+{
+    glUniformMatrix4fv(location, 1, false, value.d);
+}
+
 // TODO(kroma): do loading for vec2, vec3, vec4, mat4
 
 void tide::BindProgram(uint32_t id)
 {
     glUseProgram(id);
+}
+
+// Texture
+
+void tide::BindTexture(uint32_t id)
+{
+    glBindTexture(GL_TEXTURE_2D, id);
 }

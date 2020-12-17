@@ -241,6 +241,64 @@ namespace tide
         }
     };
     
+    inline MAT4F IdentityM4F()
+    {
+        MAT4F mat = {1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1};
+        return mat;
+    }
+    
+    inline MAT4F ScaleM4F(MAT4F& in, float x, float y, float z)
+    {
+        in.d[0] *= x;
+        in.d[1] *= x;
+        in.d[2] *= x;
+        in.d[3] *= x;
+        
+        in.d[4] *= y;
+        in.d[5] *= y;
+        in.d[6] *= y;
+        in.d[7] *= y;
+        
+        in.d[8] *= z;
+        in.d[9] *= z;
+        in.d[10]*= z;
+        in.d[11]*= z;
+        return in;
+    }
+    
+    inline MAT4F ScaleM4F(MAT4F& in, VEC3F v)
+    {
+        return ScaleM4F(in, v.x, v.y, v.z);
+    }
+    
+    inline MAT4F TranslateM4F(MAT4F& in, float x, float y, float z)
+    {
+        in.d[12] = in[0] * x + in[4] * y + in[8] * z + in[12];
+        in.d[13] = in[1] * x + in[5] * y + in[9] * z + in[13];
+        in.d[14] = in[2] * x + in[6] * y + in[10] * z + in[14];
+        in.d[15] = in[3] * x + in[7] * y + in[11] * z + in[15];
+        return in;
+    }
+    
+    inline MAT4F TranslateM4F(MAT4F& in, VEC3F v)
+    {
+        return TranslateM4F(in, v.x, v.y, v.z);
+    }
+    
+    inline MAT4F OrthoM4F(float left, float right, float bottom, float top, float near, float far)
+    {
+        MAT4F mat = IdentityM4F();
+        mat.d[0] = 2.0/(right-left);
+        mat.d[5] = 2.0/(top-bottom);
+        mat.d[10] = -2.0/(far-near);
+        mat.d[12] = -(right+left)/(right-left);
+        mat.d[13] = -(top+bottom)/(top-bottom);
+        mat.d[14] = -(far+near)/(far-near);
+        return mat;
+    }
+    
+    // TODO(kroma): Add rotation functions.
+    
     inline VEC4F operator*(MAT4F a, VEC4F b)
     {
         VEC4F vec;
