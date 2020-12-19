@@ -122,4 +122,6 @@ void tide::FreeTextRendering()
 {
     FreeVAO(*quadVAO);
     FreeProgram(*program);
+    free((void*) quadVAO);
+    free((void*) program);
 }
