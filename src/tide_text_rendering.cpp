@@ -9,7 +9,6 @@
 
 #include <stb_ds.h>
 
-#include <vector>
 #include <glad/glad.h>
 
 static tide::SHADER_PROGRAM* program;
