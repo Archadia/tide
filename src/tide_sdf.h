@@ -9,11 +9,6 @@
 
 namespace tide
 {
-    struct TSDF_FONT
-    {
-        FT_Face face;
-    };
-    
     struct TSDF_GLYPH
     {
         float width;
@@ -23,6 +18,18 @@ namespace tide
         float advanceX;
         float advanceY;
         unsigned char* buffer;
+    };
+    
+    struct TSDF_KEY_MAP
+    {
+        char key;
+        TSDF_GLYPH* value;
+    };
+    
+    struct TSDF_FONT
+    {
+        FT_Face face;
+        TSDF_KEY_MAP* glyphs;
     };
     
     /*
@@ -39,7 +46,12 @@ Initialises FreeType & other factors.
     /*
 Uninitialises FreeType & frees allocated memory.
 */
-    TSDF_ERROR DeInitTSDF();
+    TSDF_ERROR FreeTSDF();
+    
+    /*
+Frees additional meta such as hashmaps between character and glyph.
+*/
+    TSDF_ERROR FreeFontMetadata(TSDF_FONT* font);
     
     /*
 Uses FreeType to load a bitmap font and store it in the supplied TSDF_FONT output.
@@ -49,7 +61,7 @@ Uses FreeType to load a bitmap font and store it in the supplied TSDF_FONT outpu
     /*
 Uses FreeType to load in a FT_Char, and adds it to the TSDF_FONT font.
 */
-    TSDF_ERROR AddBitmapChar(TSDF_FONT& font, uint32_t unicodeCodepoint, TSDF_GLYPH* character);
+    TSDF_ERROR AddBitmapChar(TSDF_FONT& font, uint32_t unicodeCodepoint);
 }
 
 #endif //TIDE_SDF_H
