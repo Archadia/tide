@@ -49,12 +49,12 @@ int main()
     display = CreateDisplay();
     if(display)
     {
-        //glfwSwapInterval(0);
+        glfwSwapInterval(1);
         
         TIDE_LOG("Tide successfully loaded");
         tide::ProcessInit();
         
-        const double dt = 0.01;
+        const double dt = 1.0/30.0;
         double acc1 = 0.0;
         double acc2 = 0.0;
         
@@ -88,6 +88,7 @@ int main()
                 frameCount = 0;
                 acc2 -= 1;
             }
+            glClear(GL_COLOR_BUFFER_BIT);
             
             frameCount++;
             tide::ProcessDraw();

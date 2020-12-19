@@ -205,12 +205,13 @@ void tide::RenderText(const char* text, float x, float y, float scale)
             MAT4F otm = tide::OrthoM4F(0, tide::GetDisplayWidth(), tide::GetDisplayHeight(), 0, 0, 100);
             tide::LoadToProgram(locOrthographic, otm);
             
-            tide::BindTexture(fchar->id);
+            tide::BindTexture(GL_TEXTURE_2D, fchar->id);
             tide::DrawVAO();
             
             xcaret += (fchar->advance / 64.0);
         }
     }
+    tide::BindTexture(GL_TEXTURE_2D, 0);
     tide::BindVAO(0);
     tide::BindProgram(0);
 }

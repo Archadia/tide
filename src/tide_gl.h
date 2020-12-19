@@ -43,6 +43,7 @@ namespace tide
     
     // Texture
     
-    void BindTexture(uint32_t id);
+    
+    void BindTexture(int type, uint32_t id);
 }
 #endif //TIDE_GL_H

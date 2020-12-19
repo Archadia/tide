@@ -137,7 +137,7 @@ void tide::BindProgram(uint32_t id)
 
 // Texture
 
-void tide::BindTexture(uint32_t id)
+void tide::BindTexture(int type, uint32_t id)
 {
-    glBindTexture(GL_TEXTURE_2D, id);
+    glBindTexture(type, id);
 }
