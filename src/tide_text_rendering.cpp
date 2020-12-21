@@ -11,8 +11,8 @@
 
 #include <glad/glad.h>
 
-static tide::SHADER_PROGRAM* program;
-static tide::VAO* quadVAO;
+static SHADER_PROGRAM* program;
+static VAO* quadVAO;
 
 static uint32_t locTransformation;
 static uint32_t locOrthographic;
@@ -45,80 +45,82 @@ void FreeFileText(const char* text)
     arrfree(text);
 }
 
-void tide::InitTextRendering()
+void InitTextRendering()
 {
     // Creating Shader Program
-    program = (tide::SHADER_PROGRAM*) malloc(sizeof(tide::SHADER_PROGRAM));
-    // TODO: Probably should be passed in as a pointer.
-    tide::CreateProgram(*program);
+    program = (SHADER_PROGRAM*) malloc(sizeof(SHADER_PROGRAM));
+    // TODO(kroma): Probably should be passed in as a pointer.
+    CreateProgram(*program);
     
     char* vertexSource = ReadTextFile("fontv.glsl");
     char* fragmentSource = ReadTextFile("fontf.glsl");
     
     if(vertexSource != NULL)
     {
-        uint32_t vshader = tide::AddShaderToProgram(*program, vertexSource, GL_VERTEX_SHADER);
-        tide::FreeShader(vshader);
+        uint32_t vshader = AddShaderToProgram(*program, vertexSource, GL_VERTEX_SHADER);
+        FreeShader(vshader);
         FreeFileText(vertexSource);
     }
     
     if(vertexSource != NULL)
     {
-        uint32_t fshader = tide::AddShaderToProgram(*program, fragmentSource, GL_FRAGMENT_SHADER);
-        tide::FreeShader(fshader);
+        uint32_t fshader = AddShaderToProgram(*program, fragmentSource, GL_FRAGMENT_SHADER);
+        FreeShader(fshader);
         FreeFileText(fragmentSource);
     }
-    tide::LinkAndValidateProgram(*program);
+    LinkAndValidateProgram(*program);
     
     // Create quad
     
-    quadVAO = (tide::VAO*) malloc(sizeof(tide::VAO));
-    tide::CreateVAO(*quadVAO);
+    quadVAO = (VAO*) malloc(sizeof(VAO));
+    CreateVAO(*quadVAO);
     
     float vertices[] = { 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0 };
-    tide::UploadToVAO(*quadVAO, 0, 2, vertices, 12);
+    UploadToVAO(*quadVAO, 0, 2, vertices, 12);
     
     float texturecoords[] = {0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1};
-    tide::UploadToVAO(*quadVAO, 1, 2, texturecoords, 12);
+    UploadToVAO(*quadVAO, 1, 2, texturecoords, 12);
     
     // Create uniform locations
     
-    locTransformation = tide::GetUniformLocation(*program, "transformation");
-    locOrthographic = tide::GetUniformLocation(*program, "orthographic");
+    locTransformation = GetUniformLocation(*program, "transformation");
+    locOrthographic = GetUniformLocation(*program, "orthographic");
 }
 
-void tide::RenderText(tide::TSDF_FONT& font, const char* text, float x, float y, float scale)
+void RenderText(TSDF_FONT& font, const char* text, float x, float y, float scale)
 {
-    tide::BindProgram(program->id);
-    tide::BindVAO(quadVAO->id);
+    BindProgram(program->id);
+    BindVAO(quadVAO->id);
     
     // main rendering
-    tide::MAT4F orm = tide::OrthoM4F(0, tide::GetDisplayWidth(), tide::GetDisplayHeight(), 0, 0, 100);
-    tide::LoadToProgram(locOrthographic, orm);
+    MAT4F orm = OrthoM4F(0, GetDisplayWidth(), GetDisplayHeight(), 0, 0, 100);
+    LoadToProgram(locOrthographic, orm);
     
     int xcaret = 0;
     
     int len = strlen(text);
-    
     for(int i = 0; i < len; i++)
     {
         char c = text[i];
         tide:TSDF_GLYPH* glyph = hmget(font.glyphs, c);
         
-        tide::MAT4F tfm = tide::IdentityM4F();
-        tide::TranslateM4F(tfm, x + xcaret * scale, y + (16 - glyph->bearingY) * scale, 0);
-        tide::ScaleM4F(tfm, glyph->width, glyph->height, 1);//glyph->width, glyph->height, 1);
-        tide::LoadToProgram(locTransformation, tfm);
+        BindTexture(GL_TEXTURE_2D_ARRAY, font.texture->id);
         
-        tide::DrawVAO();
+        MAT4F tfm = IdentityM4F();
+        TranslateM4F(tfm, x + xcaret * scale, y + (16 - glyph->bearingY) * scale, 0);
+        ScaleM4F(tfm, glyph->width * scale, glyph->height * scale, 1);//glyph->width, glyph->height, 1);
+        LoadToProgram(locTransformation, tfm);
+        
+        DrawVAO();
         xcaret += glyph->advanceX/64;
     }
     
-    tide::BindProgram(0);
-    tide::BindVAO(0);
+    BindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    BindProgram(0);
+    BindVAO(0);
 }
 
-void tide::FreeTextRendering()
+void FreeTextRendering()
 {
     FreeVAO(*quadVAO);
     FreeProgram(*program);

@@ -14,7 +14,7 @@
 #define DEFAULT_WINDOW_HEIGHT 600
 #define DEFAULT_WINDOW_TITLE "Tide"
 
-tide::DISPLAY* CreateDisplay()
+DISPLAY* CreateDisplay()
 {
     if(glfwInit())
     {
@@ -29,7 +29,7 @@ tide::DISPLAY* CreateDisplay()
             glfwMakeContextCurrent(window);
             if(gladLoadGL())
             {
-                tide::DISPLAY* display = (tide::DISPLAY*) malloc(sizeof(tide::DISPLAY));
+                DISPLAY* display = (DISPLAY*) malloc(sizeof(DISPLAY));
                 display->window = window;
                 return display;
             }
@@ -42,7 +42,7 @@ tide::DISPLAY* CreateDisplay()
     return NULL;
 }
 
-static tide::DISPLAY* display;
+static DISPLAY* display;
 
 int main()
 {
@@ -52,7 +52,7 @@ int main()
         glfwSwapInterval(1);
         
         TIDE_LOG("Tide successfully loaded");
-        tide::ProcessInit();
+        ProcessInit();
         
         const double dt = 1.0/30.0;
         double acc1 = 0.0;
@@ -79,7 +79,7 @@ int main()
             {
                 acc1 -= dt;
                 time += dt;
-                tide::ProcessUpdate(time, dt);
+                ProcessUpdate(time, dt);
             }
             
             if(acc2 >= 1.0)
@@ -91,20 +91,20 @@ int main()
             glClear(GL_COLOR_BUFFER_BIT);
             
             frameCount++;
-            tide::ProcessDraw();
+            ProcessDraw();
             glfwSwapBuffers(display->window);
             glfwPollEvents();
             
             
         }
-        tide::ProcessClose();
+        ProcessClose();
         free(display);
     }
     TIDE_LOG("Tide successfully destroyed");
     return 0;
 }
 
-tide::DISPLAY* tide::GetDisplay()
+DISPLAY* GetDisplay()
 {
     return display;
 }

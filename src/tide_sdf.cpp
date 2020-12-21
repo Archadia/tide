@@ -1,20 +1,21 @@
 #include "tide_log.h"
 #include "tide_sdf.h"
 #include <stb_ds.h>
+#include <glad/glad.h>
 
 static FT_Library ftLibrary;
 
-tide::TSDF_ERROR tide::InitTSDF()
+TSDF_ERROR InitTSDF()
 {
     return FT_Init_FreeType(&ftLibrary);
 }
 
-tide::TSDF_ERROR tide::FreeTSDF()
+TSDF_ERROR FreeTSDF()
 {
     return FT_Done_FreeType(ftLibrary);
 }
 
-tide::TSDF_ERROR tide::FreeFontMetadata(TSDF_FONT* font)
+TSDF_ERROR FreeFontMetadata(TSDF_FONT* font)
 {
     for(int i = 0; i < hmlen(font->glyphs); i++)
     {
@@ -25,10 +26,17 @@ tide::TSDF_ERROR tide::FreeFontMetadata(TSDF_FONT* font)
         hmfree(font->glyphs);
         return 0;
     }
+    // Deleting the textures here on the GPU since
+    // I can't think of a time where this would be done
+    // otherwise...
+    glDeleteTextures(1, &font->texture->id);
+    // Deleting the compilation and texture structures too.
+    free((void*) font->compilation);
+    free((void*) font->texture);
     return 1;
 }
 
-tide::TSDF_ERROR tide::AddBitmapFont(const char* fontPath, TSDF_FONT* output)
+TSDF_ERROR AddBitmapFont(const char* fontPath, TSDF_FONT* output)
 {
     // Create FT_Face
     FT_Face ftFace;
@@ -55,13 +63,16 @@ tide::TSDF_ERROR tide::AddBitmapFont(const char* fontPath, TSDF_FONT* output)
     }
     
     output->face =  ftFace;
+    output->compilation = (COMPILATION_TEXTURE*) malloc(sizeof(COMPILATION_TEXTURE));
+    output->texture = (ARRAY_TEXTURE*) malloc(sizeof(ARRAY_TEXTURE));
+    CreateArrayTexture(ftSizeRequest.height / 64, ftSizeRequest.height / 64, output->compilation);
     output->glyphs = NULL;
     return 0;
 }
 
-tide::TSDF_ERROR tide::AddBitmapChar(TSDF_FONT& font, uint32_t unicodeCodepoint)
+TSDF_ERROR AddBitmapChar(TSDF_FONT& font, uint32_t unicodeCodepoint)
 {
-    FT_Error ftError = FT_Load_Char(font.face, unicodeCodepoint, FT_LOAD_DEFAULT);
+    FT_Error ftError = FT_Load_Char(font.face, unicodeCodepoint, FT_LOAD_RENDER);
     if(ftError > 0)
     {
         TIDE_ERROR("Tide SDF FreeType Error: \"%u\" while loading character", ftError);
@@ -80,6 +91,19 @@ tide::TSDF_ERROR tide::AddBitmapChar(TSDF_FONT& font, uint32_t unicodeCodepoint)
     character->advanceY = face->glyph->advance.y;
     character->buffer = face->glyph->bitmap.buffer;
     
+    //TIDE_LOG("width: %d", character->height);
+    int len = sizeof(character->buffer)/sizeof(character->buffer[0]);
+    //TIDE_LOG("len: %d", len);
+    
     hmput(font.glyphs, unicodeCodepoint, character);
+    
+    AddToArrayTexture(character->buffer, font.compilation);
     return 0;
+}
+
+void CompileBitmapTexture(TSDF_FONT& font)
+{
+    // Knowing this deletes the internal buffer of the COMPILATION_TEXTURE
+    CompileArrayTexture(*font.compilation, GL_RED, font.texture);
+    free((void*) font.compilation);
 }

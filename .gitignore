@@ -1,3 +1,4 @@
-build
+cmake
+notes
 .vscode
 *.ttf

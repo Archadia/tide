@@ -8,37 +8,38 @@
 
 #include <stdio.h>
 
-static tide::TSDF_FONT* font;
+static TSDF_FONT* font;
 
-void tide::ProcessInit()
+void ProcessInit()
 {
-    tide::InitTSDF();
+    InitTSDF();
     
     font = (TSDF_FONT*) malloc(sizeof(TSDF_FONT));
-    tide::AddBitmapFont("../font/Hack-Regular.ttf", font);
+    AddBitmapFont("../font/Hack-Regular.ttf", font);
     
     for(int i = ' '; i < '~'; i++)
     {
-        tide::AddBitmapChar(*font, i);
+        AddBitmapChar(*font, i);
     }
+    CompileBitmapTexture(*font);
     
-    tide::InitTextRendering();
+    InitTextRendering();
 }
 
-void tide::ProcessUpdate(double t, double dt)
+void ProcessUpdate(double t, double dt)
 {
     
 }
 
-void tide::ProcessDraw()
+void ProcessDraw()
 {
-    tide::RenderText(*font, "test", 0, 0, 1);
+    RenderText(*font, "test", 0, 0, 5);
 }
 
-void tide::ProcessClose()
+void ProcessClose()
 {
-    tide::FreeFontMetadata(font);
-    tide::FreeTextRendering();
-    tide::FreeTSDF();
+    FreeFontMetadata(font);
+    FreeTextRendering();
+    FreeTSDF();
     free((void*) font);
 }

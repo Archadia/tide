@@ -1,0 +1,1 @@
+cd cmake && tide.exe

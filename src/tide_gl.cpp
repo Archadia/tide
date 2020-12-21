@@ -5,7 +5,7 @@
 
 #include <stb_ds.h>
 
-void tide::CreateVAO(VAO& vao)
+void CreateVAO(VAO& vao)
 {
     uint32_t id;
     glGenVertexArrays(1, &id);
@@ -13,7 +13,7 @@ void tide::CreateVAO(VAO& vao)
     vao.id = id;
 }
 
-void tide::UploadToVAO(VAO& vao, uint32_t index, uint32_t size, float* data, uint32_t length)
+void UploadToVAO(VAO& vao, uint32_t index, uint32_t size, float* data, uint32_t length)
 {
     glBindVertexArray(vao.id);
     uint32_t vbo;
@@ -36,7 +36,7 @@ void tide::UploadToVAO(VAO& vao, uint32_t index, uint32_t size, float* data, uin
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void tide::FreeVAO(VAO& vao)
+void FreeVAO(VAO& vao)
 {
     if(vao.buffers)
     {
@@ -49,22 +49,22 @@ void tide::FreeVAO(VAO& vao)
     glDeleteVertexArrays(1, &vao.id);
 }
 
-void tide::BindVAO(uint32_t id)
+void BindVAO(uint32_t id)
 {
     glBindVertexArray(id);
 }
 
-void tide::DrawVAO()
+void DrawVAO()
 {
     glDrawArrays(GL_TRIANGLES, 0, 6);
 }
 
-void tide::CreateProgram(SHADER_PROGRAM& program)
+void CreateProgram(SHADER_PROGRAM& program)
 {
     program.id = glCreateProgram();
 }
 
-uint32_t tide::AddShaderToProgram(SHADER_PROGRAM& program, const char* source, uint32_t glType)
+uint32_t AddShaderToProgram(SHADER_PROGRAM& program, const char* source, uint32_t glType)
 {
     uint32_t shader = glCreateShader(glType);
     
@@ -83,7 +83,7 @@ uint32_t tide::AddShaderToProgram(SHADER_PROGRAM& program, const char* source, u
     return shader;
 }
 
-void tide::LinkAndValidateProgram(SHADER_PROGRAM& program)
+void LinkAndValidateProgram(SHADER_PROGRAM& program)
 {
     glLinkProgram(program.id);
     glValidateProgram(program.id);
@@ -98,46 +98,92 @@ void tide::LinkAndValidateProgram(SHADER_PROGRAM& program)
     }
 }
 
-void tide::FreeProgram(SHADER_PROGRAM& program)
+void FreeProgram(SHADER_PROGRAM& program)
 {
     glDeleteProgram(program.id);
 }
 
-void tide::FreeShader(uint32_t shader)
+void FreeShader(uint32_t shader)
 {
     glDeleteShader(shader);
 }
 
-uint32_t tide::GetUniformLocation(SHADER_PROGRAM& program, const char* name)
+uint32_t GetUniformLocation(SHADER_PROGRAM& program, const char* name)
 {
     return glGetUniformLocation(program.id, name);
 }
 
-template<> void tide::LoadToProgram(uint32_t location, int value)
+template<> void LoadToProgram(uint32_t location, int value)
 {
     glUniform1i(location, value);
 }
 
-template<> void tide::LoadToProgram(uint32_t location, float value)
+template<> void LoadToProgram(uint32_t location, float value)
 {
     glUniform1f(location, value);
 }
 
-template<> void tide::LoadToProgram(uint32_t location, tide::MAT4F value)
+template<> void LoadToProgram(uint32_t location, MAT4F value)
 {
     glUniformMatrix4fv(location, 1, false, value.d);
 }
 
 // TODO(kroma): do loading for vec2, vec3, vec4, mat4
 
-void tide::BindProgram(uint32_t id)
+void BindProgram(uint32_t id)
 {
     glUseProgram(id);
 }
 
 // Texture
 
-void tide::BindTexture(int type, uint32_t id)
+void CreateArrayTexture(int width, int height, COMPILATION_TEXTURE* out)
+{
+    out->width = width;
+    out->height = height;
+    out->buffer = NULL;
+}
+
+// TODO(kroma): consider changing COMPILATION_TEXTURE to reference
+void AddToArrayTexture(unsigned char* buffer, COMPILATION_TEXTURE* tex)
+{
+    for(int y = 0; y < tex->height; y++)
+    {
+        for(int x = 0; x < tex->width; x++)
+        {
+            //arrput(tex->buffer, buffer[x + y * tex->width]);
+            tex->size++;
+        }
+    }
+}
+
+void CompileArrayTexture(COMPILATION_TEXTURE& in, uint32_t format, ARRAY_TEXTURE* out)
+{
+    glGenTextures(1, &out->id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, out->id);
+    
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, format, in.width, in.height, in.size, 0, format, GL_UNSIGNED_BYTE, in.buffer);
+    
+    // Params, gonna keep with just nearest for now
+    // TODO(kroma), allow the caller to choose tex params.
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    
+    // Free the input buffer, the caller can deal with the allocation.
+    FreeArrayTexture(&in);
+    
+    out->width = in.width;
+    out->height = in.height;
+}
+
+void FreeArrayTexture(COMPILATION_TEXTURE* tex)
+{
+    arrfree(tex->buffer);
+}
+
+void BindTexture(int type, uint32_t id)
 {
     glBindTexture(type, id);
 }
